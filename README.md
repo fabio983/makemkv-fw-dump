@@ -2,9 +2,14 @@
 
 **English** | [Italiano](README.it.md)
 
-A small script that generates the **firmware dump of your Blu-ray drive** for MakeMKV, so that [Automatic Ripping Machine (ARM)](https://github.com/automatic-ripping-machine/automatic-ripping-machine), or your own `makemkvcon` scripts, stop hanging on Blu-ray discs.
+A small script that generates the **firmware dump of your Blu-ray drive** for MakeMKV, the file recent MakeMKV versions need to stop hanging on Blu-ray discs.
 
-It builds an older MakeMKV version (1.17.6) inside a throwaway Docker container, reads one disc, collects the `dump_FW_*.tgz` file MakeMKV creates, and cleans up. Nothing is installed on the host apart from a Docker image you can remove afterwards.
+It was born to fix my own [Automatic Ripping Machine (ARM)](https://github.com/automatic-ripping-machine/automatic-ripping-machine) setup, but the problem is in MakeMKV itself, so it works for two use cases:
+
+- **ARM users:** the script finds the ARM container, stops it while it works, and can install the dump in ARM's `.MakeMKV` folder for you (`--install`).
+- **Anyone using `makemkvcon` without ARM** (your own scripts, or ARM not installed yet): pass your MakeMKV key with `-k` and copy the dump into your `~/.MakeMKV` folder. See [Without ARM](#without-arm).
+
+Under the hood it builds an older MakeMKV version (1.17.6) inside a throwaway Docker container, reads one disc, collects the `dump_FW_*.tgz` file MakeMKV creates, and cleans up. Nothing is installed on the host apart from a Docker image you can remove afterwards.
 
 ## The problem
 

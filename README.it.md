@@ -2,9 +2,14 @@
 
 [English](README.md) | **Italiano**
 
-Un piccolo script che genera il **dump del firmware del lettore Blu-ray** per MakeMKV, così [Automatic Ripping Machine (ARM)](https://github.com/automatic-ripping-machine/automatic-ripping-machine), o i tuoi script basati su `makemkvcon`, smettono di bloccarsi sui Blu-ray.
+Un piccolo script che genera il **dump del firmware del lettore Blu-ray** per MakeMKV, il file di cui le versioni recenti di MakeMKV hanno bisogno per non bloccarsi sui Blu-ray.
 
-Compila una versione precedente di MakeMKV (1.17.6) in un container Docker usa e getta, legge un disco, recupera il file `dump_FW_*.tgz` creato da MakeMKV e fa pulizia. Sull'host non viene installato niente, a parte un'immagine Docker che puoi rimuovere alla fine.
+È nato per risolvere un problema della mia installazione di [Automatic Ripping Machine (ARM)](https://github.com/automatic-ripping-machine/automatic-ripping-machine), ma il problema sta in MakeMKV, quindi copre due casi d'uso:
+
+- **Chi usa ARM:** lo script trova il container di ARM, lo ferma mentre lavora e può installare il dump nella cartella `.MakeMKV` di ARM al posto tuo (`--install`).
+- **Chi usa `makemkvcon` senza ARM** (script propri, oppure ARM non ancora installato): passi la chiave MakeMKV con `-k` e copi il dump nella tua cartella `~/.MakeMKV`. Vedi [Senza ARM](#senza-arm).
+
+Dietro le quinte compila una versione precedente di MakeMKV (1.17.6) in un container Docker usa e getta, legge un disco, recupera il file `dump_FW_*.tgz` creato da MakeMKV e fa pulizia. Sull'host non viene installato niente, a parte un'immagine Docker che puoi rimuovere alla fine.
 
 ## Il problema
 
