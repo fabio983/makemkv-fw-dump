@@ -2,7 +2,7 @@
 
 [English](README.md) | **Italiano**
 
-Un piccolo script che genera il **dump del firmware del lettore Blu-ray** per MakeMKV, così [Automatic Ripping Machine (ARM)](https://github.com/automatic-ripping-machine/automatic-ripping-machine) smette di bloccarsi sui Blu-ray.
+Un piccolo script che genera il **dump del firmware del lettore Blu-ray** per MakeMKV, così [Automatic Ripping Machine (ARM)](https://github.com/automatic-ripping-machine/automatic-ripping-machine), o i tuoi script basati su `makemkvcon`, smettono di bloccarsi sui Blu-ray.
 
 Compila una versione precedente di MakeMKV (1.17.6) in un container Docker usa e getta, legge un disco, recupera il file `dump_FW_*.tgz` creato da MakeMKV e fa pulizia. Sull'host non viene installato niente, a parte un'immagine Docker che puoi rimuovere alla fine.
 
@@ -18,12 +18,15 @@ Con le versioni recenti di MakeMKV (dalla 1.17.7 in poi) ARM può bloccarsi sui 
 
 Nei miei test il pezzo mancante era il **dump del firmware** del lettore (`dump_FW_<ID>.tgz` nella cartella `.MakeMKV`). Con quel solo file accanto a `settings.conf`, MakeMKV 1.18.4 dentro ARM è partito subito. Le versioni precedenti di MakeMKV creano il dump in automatico alla prima lettura di un disco: lo script fa esattamente questo, in un ambiente isolato.
 
+Lo stesso blocco si è presentato con MakeMKV 1.18.4 installato direttamente sull'host, fuori da ARM: il dump serve quindi a qualsiasi configurazione con `makemkvcon`, non solo ad ARM.
+
 ## Requisiti
 
 - Host Linux con Docker (va bene quello su cui gira ARM)
 - `lsscsi` e `udevadm` (`sudo apt install lsscsi`)
 - Un Blu-ray da leggere (va bene qualsiasi disco: il dump dipende dal lettore, non dal disco)
-- Una chiave MakeMKV (va bene la chiave beta gratuita). Se ARM è installato, lo script la legge dal `settings.conf` di ARM
+- Una chiave MakeMKV (va bene la chiave beta gratuita). Se ARM è installato, lo script la legge dal `settings.conf` di ARM; altrimenti passala con `-k`
+- ARM **non** è necessario: vedi [Senza ARM](#senza-arm)
 - Connessione a internet per scaricare MakeMKV 1.17.6 da [makemkv.com/download/old](https://www.makemkv.com/download/old/)
 
 ## Uso
@@ -95,6 +98,24 @@ I messaggi dello script sono in inglese.
    ```
 
 3. Inserisci un Blu-ray: il rip dovrebbe partire dopo l'attesa per l'intervento manuale di ARM.
+
+## Senza ARM
+
+Lo script funziona anche se ARM non è ancora installato, o se usi `makemkvcon` con i tuoi script. In quel caso non c'è un `settings.conf` da cui leggere la chiave, quindi passala con `-k`:
+
+```bash
+sudo ./makemkv-fw-dump.sh -k "T-XXXXXXXXXXXX"
+```
+
+Non usare `--install`: il dump resta nella cartella di output. Poi:
+
+- **Se installi ARM dopo:** avvia ARM una volta, così crea la sua cartella `.MakeMKV`, e copia lì il dump come spiegato in [Usare il dump con ARM](#usare-il-dump-con-arm). Così ARM funziona con i Blu-ray fin dal primo rip.
+- **Con i tuoi script `makemkvcon`:** copia il dump nella cartella `.MakeMKV` nella home dell'utente che lancia `makemkvcon` (ad esempio `~/.MakeMKV/`, oppure `/root/.MakeMKV/` se gira come root), accanto a `settings.conf`:
+
+  ```bash
+  mkdir -p ~/.MakeMKV
+  cp makemkv-fw-dump-*/dump_FW_*.tgz ~/.MakeMKV/
+  ```
 
 ## Note
 

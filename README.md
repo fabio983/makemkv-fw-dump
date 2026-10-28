@@ -2,7 +2,7 @@
 
 **English** | [Italiano](README.it.md)
 
-A small script that generates the **firmware dump of your Blu-ray drive** for MakeMKV, so that [Automatic Ripping Machine (ARM)](https://github.com/automatic-ripping-machine/automatic-ripping-machine) stops hanging on Blu-ray discs.
+A small script that generates the **firmware dump of your Blu-ray drive** for MakeMKV, so that [Automatic Ripping Machine (ARM)](https://github.com/automatic-ripping-machine/automatic-ripping-machine), or your own `makemkvcon` scripts, stop hanging on Blu-ray discs.
 
 It builds an older MakeMKV version (1.17.6) inside a throwaway Docker container, reads one disc, collects the `dump_FW_*.tgz` file MakeMKV creates, and cleans up. Nothing is installed on the host apart from a Docker image you can remove afterwards.
 
@@ -18,12 +18,15 @@ With recent MakeMKV versions (1.17.7 and later), ARM can get stuck on Blu-ray di
 
 In my tests the missing piece was the **firmware dump** of the drive (`dump_FW_<ID>.tgz` in the `.MakeMKV` folder). With that single file next to `settings.conf`, MakeMKV 1.18.4 inside ARM started immediately. Older MakeMKV versions create the dump automatically on the first disc read; this script does exactly that, in isolation.
 
+The same hang happened with MakeMKV 1.18.4 installed directly on the host, outside ARM, so the dump is useful for any `makemkvcon` setup, not only ARM.
+
 ## Requirements
 
 - Linux host with Docker (the one running ARM is fine)
 - `lsscsi` and `udevadm` (`sudo apt install lsscsi`)
 - A Blu-ray disc to read (any disc works, the dump depends on the drive, not on the disc)
-- A MakeMKV key (the free beta key works). If ARM is installed, the script reads it from ARM's `settings.conf`
+- A MakeMKV key (the free beta key works). If ARM is installed, the script reads it from ARM's `settings.conf`; otherwise pass it with `-k`
+- ARM is **not** required: see [Without ARM](#without-arm)
 - Internet access to download MakeMKV 1.17.6 from [makemkv.com/download/old](https://www.makemkv.com/download/old/)
 
 ## Usage
@@ -93,6 +96,24 @@ If ARM is installed without Docker, the script cannot stop it: stop it yourself 
    ```
 
 3. Insert a Blu-ray: the rip should start after ARM's manual-override wait.
+
+## Without ARM
+
+The script also works when ARM is not installed yet, or when you use `makemkvcon` with your own scripts. In that case there is no `settings.conf` to read the key from, so pass it with `-k`:
+
+```bash
+sudo ./makemkv-fw-dump.sh -k "T-XXXXXXXXXXXX"
+```
+
+Do not use `--install`: the dump stays in the output folder. Then:
+
+- **Installing ARM later:** start ARM once so it creates its `.MakeMKV` folder, then copy the dump there as shown in [Using the dump with ARM](#using-the-dump-with-arm). This way ARM works with Blu-ray discs from the first rip.
+- **Your own `makemkvcon` scripts:** copy the dump into the `.MakeMKV` folder in the home directory of the user that runs `makemkvcon` (for example `~/.MakeMKV/`, or `/root/.MakeMKV/` if it runs as root), next to `settings.conf`:
+
+  ```bash
+  mkdir -p ~/.MakeMKV
+  cp makemkv-fw-dump-*/dump_FW_*.tgz ~/.MakeMKV/
+  ```
 
 ## Notes
 
