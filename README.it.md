@@ -52,7 +52,7 @@ Lo script:
 
 **Non inserire il disco prima che lo script te lo chieda**, altrimenti ARM potrebbe avviare un job ed espellere il disco quando viene fermato.
 
-Di default il dump **non** viene copiato nella cartella di ARM, così puoi verificarlo prima. Aggiungi `--install` per copiarlo lì con il proprietario corretto.
+Di default il dump **non** viene copiato nella cartella di ARM, così puoi verificarlo prima. Aggiungi `--install` per copiarlo lì con il proprietario corretto; `--install` aggiunge anche `cfg_UpdateEnable = "0"` e `cfg_SdfDownload = "0"` al `settings.conf` di ARM (vedi [Usare il dump con ARM](#usare-il-dump-con-arm)).
 
 ### Opzioni
 
@@ -62,7 +62,7 @@ Di default il dump **non** viene copiato nella cartella di ARM, così puoi verif
 | `-k, --key CHIAVE` | Chiave MakeMKV. Se omessa, viene letta dal `settings.conf` di ARM, oppure viene scaricata la chiave beta gratuita. |
 | `-o, --output CARTELLA` | Cartella di output per dump e log. |
 | `-c, --container NOME` | Nome del container di ARM. Se omesso, lo script cerca un container attivo chiamato `arm`, `arm-rippers` o `automatic-ripping-machine`, oppure basato su un'immagine il cui nome contiene `automatic-ripping-machine`. |
-| `--install` | Copia il dump anche nella cartella `.MakeMKV` di ARM, con lo stesso proprietario della cartella. |
+| `--install` | Copia il dump anche nella cartella `.MakeMKV` di ARM, con lo stesso proprietario della cartella, e imposta `cfg_UpdateEnable` e `cfg_SdfDownload` a `"0"` nel `settings.conf` di ARM. |
 | `--remove-image` | Rimuove l'immagine Docker alla fine. |
 | `-h, --help` | Mostra l'aiuto. |
 
@@ -95,7 +95,7 @@ I messaggi dello script sono in inglese.
    sudo chown $(stat -c '%u:%g' /home/arm/.MakeMKV) /home/arm/.MakeMKV/dump_FW_*.tgz
    ```
 
-2. Facoltativo: aggiungi queste due righe a `/home/arm/.MakeMKV/settings.conf`, così MakeMKV non controlla gli aggiornamenti e non scarica i dati SDF a ogni avvio. L'aggiornamento della chiave fatto da ARM modifica solo la riga `app_Key`, quindi restano:
+2. Aggiungi queste due righe (con `--install` lo fa lo script) a `/home/arm/.MakeMKV/settings.conf`, così MakeMKV non controlla gli aggiornamenti e non scarica i dati SDF a ogni avvio. L'aggiornamento della chiave fatto da ARM modifica solo la riga `app_Key`, quindi restano:
 
    ```
    cfg_UpdateEnable = "0"

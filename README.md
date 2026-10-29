@@ -52,7 +52,7 @@ The script:
 
 **Do not insert the disc before the script asks for it**, otherwise ARM may start a job and eject the disc when it is stopped.
 
-By default the dump is **not** copied into ARM's folder, so you can check it first. Add `--install` to copy it there with the right owner.
+By default the dump is **not** copied into ARM's folder, so you can check it first. Add `--install` to copy it there with the right owner; `--install` also adds `cfg_UpdateEnable = "0"` and `cfg_SdfDownload = "0"` to ARM's `settings.conf` (see [Using the dump with ARM](#using-the-dump-with-arm)).
 
 ### Options
 
@@ -62,7 +62,7 @@ By default the dump is **not** copied into ARM's folder, so you can check it fir
 | `-k, --key KEY` | MakeMKV key. If omitted, it is read from ARM's `settings.conf`, or the free beta key is downloaded. |
 | `-o, --output DIR` | Output folder for the dump and the log. |
 | `-c, --container NAME` | ARM container name. If omitted, the script looks for a running container named `arm`, `arm-rippers` or `automatic-ripping-machine`, or running an image whose name contains `automatic-ripping-machine`. |
-| `--install` | Also copy the dump into ARM's `.MakeMKV` folder, with the same owner as that folder. |
+| `--install` | Also copy the dump into ARM's `.MakeMKV` folder, with the same owner as that folder, and set `cfg_UpdateEnable` and `cfg_SdfDownload` to `"0"` in ARM's `settings.conf`. |
 | `--remove-image` | Remove the Docker image at the end. |
 | `-h, --help` | Show help. |
 
@@ -93,7 +93,7 @@ If ARM is installed without Docker, the script cannot stop it: stop it yourself 
    sudo chown $(stat -c '%u:%g' /home/arm/.MakeMKV) /home/arm/.MakeMKV/dump_FW_*.tgz
    ```
 
-2. Optionally, add these two lines to `/home/arm/.MakeMKV/settings.conf` to stop MakeMKV from checking for updates and downloading SDF data at every run. ARM's key update only changes the `app_Key` line, so they are kept:
+2. Add these two lines (`--install` does it for you) to `/home/arm/.MakeMKV/settings.conf` to stop MakeMKV from checking for updates and downloading SDF data at every run. ARM's key update only changes the `app_Key` line, so they are kept:
 
    ```
    cfg_UpdateEnable = "0"

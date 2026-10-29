@@ -30,7 +30,8 @@
 #                    automatic-ripping-machine, or running an image whose
 #                    name contains automatic-ripping-machine.
 #   --install        Also copy the dump into ARM's .MakeMKV folder, with the
-#                    same owner as that folder.
+#                    same owner as that folder, and set cfg_UpdateEnable and
+#                    cfg_SdfDownload to "0" in ARM's settings.conf.
 #   --remove-image   Remove the Docker image at the end (by default it is
 #                    kept, so a second run does not need to rebuild it).
 #   -h, --help       Show this help.
@@ -307,6 +308,20 @@ if [[ $INSTALL -eq 1 ]]; then
   cp "$OUT_DIR/$DUMP_NAME" "$ARM_MAKEMKV_DIR/"
   chown "$OWNER" "$ARM_MAKEMKV_DIR/$DUMP_NAME"
   log "Dump installed in $ARM_MAKEMKV_DIR (owner $OWNER)"
+
+  # Stop MakeMKV from checking for updates and downloading SDF data at every
+  # run. ARM's key update only rewrites the app_Key line, so these are kept.
+  set_setting() {
+    if grep -q "^$1 *=" "$ARM_SETTINGS" 2>/dev/null; then
+      sed -i -E "s|^$1 *=.*|$1 = \"$2\"|" "$ARM_SETTINGS"
+    else
+      printf '%s = "%s"\n' "$1" "$2" >> "$ARM_SETTINGS"
+    fi
+  }
+  set_setting cfg_UpdateEnable 0
+  set_setting cfg_SdfDownload 0
+  chown "$OWNER" "$ARM_SETTINGS"
+  info "Set cfg_UpdateEnable = \"0\" and cfg_SdfDownload = \"0\" in $ARM_SETTINGS"
 fi
 
 if [[ $REMOVE_IMAGE -eq 1 ]]; then
