@@ -7,7 +7,7 @@ Un piccolo script che genera il **dump del firmware del lettore Blu-ray** per Ma
 È nato per risolvere un problema della mia installazione di [Automatic Ripping Machine (ARM)](https://github.com/automatic-ripping-machine/automatic-ripping-machine), ma il problema sta in MakeMKV, quindi copre due casi d'uso:
 
 - **Chi usa ARM:** lo script trova il container di ARM, lo ferma mentre lavora e può installare il dump nella cartella `.MakeMKV` di ARM al posto tuo (`--install`).
-- **Chi usa `makemkvcon` senza ARM** (script propri, oppure ARM non ancora installato): passi la chiave MakeMKV con `-k` e copi il dump nella tua cartella `~/.MakeMKV`. Vedi [Senza ARM](#senza-arm).
+- **Chi usa `makemkvcon` senza ARM** (script propri, oppure ARM non ancora installato): lo script usa la chiave beta gratuita (o la tua chiave con `-k`) e copi il dump nella tua cartella `~/.MakeMKV`. Vedi [Senza ARM](#senza-arm).
 
 Dietro le quinte compila una versione precedente di MakeMKV (1.17.6) in un container Docker usa e getta, legge un disco, recupera il file `dump_FW_*.tgz` creato da MakeMKV e fa pulizia. Sull'host non viene installato niente, a parte un'immagine Docker che puoi rimuovere alla fine.
 
@@ -30,7 +30,7 @@ Lo stesso blocco si è presentato con MakeMKV 1.18.4 installato direttamente sul
 - Host Linux con Docker (va bene quello su cui gira ARM)
 - `lsscsi` e `udevadm` (`sudo apt install lsscsi`)
 - Un Blu-ray da leggere (va bene qualsiasi disco: il dump dipende dal lettore, non dal disco)
-- Una chiave MakeMKV (va bene la chiave beta gratuita). Se ARM è installato, lo script la legge dal `settings.conf` di ARM; altrimenti passala con `-k`
+- Una chiave MakeMKV. Lo script la legge dal `settings.conf` di ARM; se ARM non ha ancora usato MakeMKV (nessun Blu-ray rippato finora) o non è installato, scarica la chiave beta gratuita del mese dal [forum di MakeMKV](https://forum.makemkv.com/forum/viewtopic.php?f=5&t=1053), come fa ARM. Per usare la tua chiave, passala con `-k`
 - ARM **non** è necessario: vedi [Senza ARM](#senza-arm)
 - Connessione a internet per scaricare MakeMKV 1.17.6 da [makemkv.com/download/old](https://www.makemkv.com/download/old/)
 
@@ -45,7 +45,7 @@ Lo script:
 
 1. trova il container di ARM e lo ferma, così ARM non si prende il disco. Usa `docker stop` e, alla fine (anche in caso di errori), `docker start`: il container mantiene la sua configurazione originale;
 2. trova il lettore Blu-ray e il relativo device `sg`;
-3. legge la chiave MakeMKV dal `settings.conf` di ARM, nella cartella dell'host montata su `/home/arm` nel container;
+3. legge la chiave MakeMKV dal `settings.conf` di ARM, nella cartella dell'host montata su `/home/arm` nel container, oppure scarica la chiave beta gratuita se non c'è ancora;
 4. compila MakeMKV 1.17.6 in un'immagine Docker (qualche minuto, solo la prima volta);
 5. ti chiede di inserire un Blu-ray e lo legge con una cartella `.MakeMKV` pulita che contiene solo la chiave;
 6. salva il dump e il log completo in `./makemkv-fw-dump-AAAAMMGG-HHMMSS/` e lo confronta con l'eventuale dump già presente in ARM.
@@ -59,7 +59,7 @@ Di default il dump **non** viene copiato nella cartella di ARM, così puoi verif
 | Opzione | Descrizione |
 |---|---|
 | `-d, --device /dev/srX` | Lettore da usare. Se omesso, il lettore Blu-ray viene scelto in automatico quando ce n'è uno solo. |
-| `-k, --key CHIAVE` | Chiave MakeMKV. Se omessa, viene letta dal `settings.conf` di ARM. |
+| `-k, --key CHIAVE` | Chiave MakeMKV. Se omessa, viene letta dal `settings.conf` di ARM, oppure viene scaricata la chiave beta gratuita. |
 | `-o, --output CARTELLA` | Cartella di output per dump e log. |
 | `-c, --container NOME` | Nome del container di ARM. Se omesso, lo script cerca un container attivo chiamato `arm`, `arm-rippers` o `automatic-ripping-machine`, oppure basato su un'immagine il cui nome contiene `automatic-ripping-machine`. |
 | `--install` | Copia il dump anche nella cartella `.MakeMKV` di ARM, con lo stesso proprietario della cartella. |
@@ -106,9 +106,10 @@ I messaggi dello script sono in inglese.
 
 ## Senza ARM
 
-Lo script funziona anche se ARM non è ancora installato, o se usi `makemkvcon` con i tuoi script. In quel caso non c'è un `settings.conf` da cui leggere la chiave, quindi passala con `-k`:
+Lo script funziona anche se ARM non è ancora installato, o se usi `makemkvcon` con i tuoi script. In quel caso non c'è un `settings.conf` di ARM da cui leggere la chiave, quindi lo script scarica la chiave beta gratuita. Per usare la tua chiave, passala con `-k`:
 
 ```bash
+sudo ./makemkv-fw-dump.sh
 sudo ./makemkv-fw-dump.sh -k "T-XXXXXXXXXXXX"
 ```
 

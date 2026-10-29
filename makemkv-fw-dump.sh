@@ -20,7 +20,9 @@
 #   -d, --device     Drive to use (e.g. /dev/sr1). If omitted, the script
 #                    picks the Blu-ray drive when there is exactly one.
 #   -k, --key        MakeMKV key (beta or registered). If omitted, it is read
-#                    from ARM's settings.conf (see ARM_MAKEMKV_DIR).
+#                    from ARM's settings.conf (see ARM_MAKEMKV_DIR); if that
+#                    has no key yet, the current free beta key is downloaded
+#                    from the MakeMKV forum.
 #   -o, --output     Folder where the dump and the log are saved.
 #                    Default: ./makemkv-fw-dump-YYYYMMDD-HHMMSS
 #   -c, --container  Name of the ARM container. If omitted, the script looks
@@ -162,11 +164,29 @@ SG_DEVICE="$(lsscsi -g | awk -v d="$DEVICE" '$(NF-1)==d {print $NF}')"
 info "Generic SCSI device: $SG_DEVICE"
 
 # --- Key -------------------------------------------------------------------
-if [[ -z "$KEY" ]]; then
-  [[ -r "$ARM_SETTINGS" ]] || die "Cannot read $ARM_SETTINGS: pass the key with -k."
+BETA_KEY_URL="https://forum.makemkv.com/forum/viewtopic.php?f=5&t=1053"
+fetch_beta_key() {
+  # Same source ARM uses (scripts/update_key.sh)
+  local page
+  if command -v curl >/dev/null 2>&1; then
+    page="$(curl -fsSL --retry 3 "$BETA_KEY_URL" 2>/dev/null)" || return 1
+  elif command -v wget >/dev/null 2>&1; then
+    page="$(wget -qO- --tries=3 "$BETA_KEY_URL" 2>/dev/null)" || return 1
+  else
+    return 1
+  fi
+  grep -oP 'T-[\w\d@]{66}' <<<"$page" | head -n1
+}
+
+if [[ -z "$KEY" && -r "$ARM_SETTINGS" ]]; then
   KEY="$(grep -m1 '^app_Key' "$ARM_SETTINGS" | sed -E 's/^app_Key *= *"(.*)".*/\1/')"
-  [[ -n "$KEY" ]] || die "No app_Key in $ARM_SETTINGS: pass the key with -k."
-  info "MakeMKV key read from $ARM_SETTINGS"
+  [[ -n "$KEY" ]] && info "MakeMKV key read from $ARM_SETTINGS"
+fi
+if [[ -z "$KEY" ]]; then
+  info "No MakeMKV key found (ARM has not run MakeMKV yet?): downloading the free beta key"
+  KEY="$(fetch_beta_key || true)"
+  [[ -n "$KEY" ]] || die "Cannot download the beta key from $BETA_KEY_URL: pass the key with -k."
+  info "Using the current MakeMKV beta key"
 fi
 
 # --- Output folder ---------------------------------------------------------
@@ -187,9 +207,17 @@ RUN apt-get update \\
     libssl-dev libexpat1-dev libavcodec-dev zlib1g-dev wget ca-certificates \\
  && rm -rf /var/lib/apt/lists/*
 WORKDIR /tmp/build
-RUN wget -q https://www.makemkv.com/download/old/makemkv-oss-${MKV_VERSION}.tar.gz \\
-         https://www.makemkv.com/download/old/makemkv-bin-${MKV_VERSION}.tar.gz \\
- && tar xzf makemkv-oss-${MKV_VERSION}.tar.gz \\
+# makemkv.com can drop the connection mid-download: retry each file and check
+# the archive before extracting it
+RUN for part in oss bin; do \\
+      f="makemkv-\$part-${MKV_VERSION}.tar.gz"; n=0; \\
+      until wget -nv --tries=3 --timeout=60 -O "\$f" "https://www.makemkv.com/download/old/\$f" && gzip -t "\$f"; do \\
+        n=\$((n+1)); \\
+        if [ "\$n" -ge 5 ]; then echo "Download of \$f failed after \$n attempts" >&2; exit 1; fi; \\
+        echo "Download of \$f incomplete, retrying (\$n/5)..."; rm -f "\$f"; sleep 10; \\
+      done; \\
+    done
+RUN tar xzf makemkv-oss-${MKV_VERSION}.tar.gz \\
  && tar xzf makemkv-bin-${MKV_VERSION}.tar.gz \\
  && cd makemkv-oss-${MKV_VERSION} && ./configure --disable-gui && make -j"\$(nproc)" && make install && cd .. \\
  && cd makemkv-bin-${MKV_VERSION} && mkdir -p tmp && echo accepted > tmp/eula_accepted && make install && cd .. \\
